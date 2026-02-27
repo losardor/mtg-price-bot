@@ -12,3 +12,12 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  test:
+    build: .
+    container_name: mtg-price-bot-test
+    entrypoint: ["python", "-m", "pytest"]
+    command: ["tests/", "-v"]
+    volumes:
+      - .:/app
+    profiles: ["test"]

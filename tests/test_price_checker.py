@@ -78,6 +78,27 @@ class TestCheckCardPrice:
         assert result is not None
         assert result["id"] == 2
 
+    def test_skips_non_dict_products(self, monkeypatch):
+        """API may return strings instead of dicts; these should be skipped."""
+        products = [
+            "unexpected string",
+            _make_product(1, 1500),
+            42,
+        ]
+        monkeypatch.setattr(
+            "price_checker.get_marketplace_products",
+            lambda bp_id: products,
+        )
+        entry = {
+            "name": "Test Card",
+            "foil": False,
+            "blueprint_ids": [500],
+        }
+        result = check_card_price(entry)
+        assert result is not None
+        assert result["id"] == 1
+        assert result["price"]["cents"] == 1500
+
     def test_one_blueprint_fails_still_returns_others(self, monkeypatch):
         call_count = {"n": 0}
 

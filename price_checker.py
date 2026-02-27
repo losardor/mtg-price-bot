@@ -32,6 +32,8 @@ def check_card_price(card_entry: dict) -> dict | None:
             continue
 
         for p in products:
+            if not isinstance(p, dict):
+                continue
             if is_acceptable(p, want_foil):
                 all_acceptable.append(p)
 

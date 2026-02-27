@@ -327,18 +327,21 @@ def main() -> None:
     app.add_handler(CommandHandler("list", cmd_list))
     app.add_handler(CommandHandler("check", cmd_check))
 
-    # Start APScheduler
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(
-        scheduled_price_check,
-        "interval",
-        hours=CHECK_INTERVAL_HOURS,
-        args=[app],
-        id="price_check",
-        name="Hourly price check",
-    )
-    scheduler.start()
-    logger.info("Scheduler started (interval: %d hour(s))", CHECK_INTERVAL_HOURS)
+    # Start APScheduler inside the event loop via post_init
+    async def start_scheduler(application):
+        scheduler = AsyncIOScheduler()
+        scheduler.add_job(
+            scheduled_price_check,
+            "interval",
+            hours=CHECK_INTERVAL_HOURS,
+            args=[application],
+            id="price_check",
+            name="Hourly price check",
+        )
+        scheduler.start()
+        logger.info("Scheduler started (interval: %d hour(s))", CHECK_INTERVAL_HOURS)
+
+    app.post_init = start_scheduler
 
     # Start polling
     logger.info("Starting Telegram bot polling...")

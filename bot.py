@@ -12,10 +12,15 @@ from alerts import format_alert, format_price_report, format_watchlist, should_a
 from config import CHECK_INTERVAL_HOURS, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 from price_checker import check_all_prices, check_card_price
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-)
+try:
+    # tgkit: token redaction in every record, httpx (which logs token URLs) at WARNING
+    from tgkit import setup_logging
+    setup_logging("mtg-price-bot")
+except ImportError:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    )
 logger = logging.getLogger(__name__)
 
 

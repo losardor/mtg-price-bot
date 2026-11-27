@@ -1,0 +1,20 @@
+# systemd *user* unit for mtg-price-bot on makerfaire-nuc (user makerfaire, linger on).
+# Install: cp deploy/mtg-price-bot.service ~/.config/systemd/user/
+#          systemctl --user daemon-reload && systemctl --user enable --now mtg-price-bot
+# Config:  ~/.config/tgbots/mtg-price-bot.env (mode 600)
+# Data:    the working directory below; the watchlist is data/watchlist.json in it
+# A crash is reported through the monitor bot (tgsignal-wrap); a stop is not.
+[Unit]
+Description=mtg-price-bot (Telegram): CardTrader price alerts
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/.local/share/tgbots/mtg-price-bot
+ExecStart=%h/bots/mtg-price-bot/.venv/bin/tgsignal-wrap -p mtg -n service --no-record --tail 20 -- %h/bots/mtg-price-bot/.venv/bin/python %h/bots/mtg-price-bot/bot.py
+Restart=on-failure
+RestartSec=60
+
+[Install]
+WantedBy=default.target

@@ -1,6 +1,13 @@
 import os
 import pytest
 
+# Tests never read real secrets: config loads at import, so give it placeholders
+# and point tgkit at a file that does not exist.
+os.environ["TGKIT_ENV_FILE"] = "/nonexistent/tgkit-test.env"
+os.environ.setdefault("CARDTRADER_API_TOKEN", "test-cardtrader-token")
+os.environ.setdefault("TELEGRAM_BOT_TOKEN", "123456:test-telegram-token")
+os.environ.setdefault("TELEGRAM_CHAT_ID", "123")
+
 
 # ---------------------------------------------------------------------------
 # Sample CardTrader product dicts

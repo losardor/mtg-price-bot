@@ -5,6 +5,8 @@
    must carry both.
 2. An edited /add was handled again, with update.message None: command
    handlers must ignore edited messages.
+3. /marketplace/products returns {"<blueprint_id>": [products]}; the products
+   were dropped, so /check and the hourly check never found an offer.
 """
 from datetime import datetime, timezone
 
@@ -64,3 +66,25 @@ def test_command_handlers_ignore_edited_messages():
     for h in handlers:
         assert h.filters.check_update(_update(edited=False))
         assert not h.filters.check_update(_update(edited=True))
+
+
+@responses.activate
+def test_marketplace_products_keyed_by_blueprint():
+    """Live shape: {"<blueprint_id>": [products]}; before the fix only the key was kept."""
+    url = "https://api.cardtrader.com/api/v2/marketplace/products"
+    responses.add(responses.GET, url, json={"4459": [{"id": 1, "price": {"cents": 131}},
+                                                    {"id": 2, "price": {"cents": 150}}]})
+    responses.add(responses.GET, url, json={"4459": [{"id": 3, "price": {"cents": 99}}]})
+    products = cardtrader.get_marketplace_products(4459)
+    assert [p["id"] for p in products] == [1, 2, 3]
+
+
+def test_check_finds_offer_from_keyed_payload(monkeypatch):
+    import price_checker
+    payload = {"4459": [{"id": 7, "price": {"cents": 131, "currency": "EUR"},
+                         "properties_hash": {"condition": "Near Mint", "mtg_language": "en",
+                                             "mtg_foil": False}}]}
+    monkeypatch.setattr(price_checker, "get_marketplace_products",
+                        lambda bp: cardtrader._products_from_payload(payload))
+    cheapest = price_checker.check_card_price({"blueprint_ids": [4459], "foil": False})
+    assert cheapest["id"] == 7

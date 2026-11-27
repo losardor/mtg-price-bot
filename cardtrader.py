@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 import requests
 
-from config import CARDTRADER_API_TOKEN, CARDTRADER_BASE_URL, MTG_GAME_ID
+from config import CARDTRADER_API_TOKEN, CARDTRADER_BASE_URL, MTG_GAME_ID, USER_AGENT
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,11 @@ def _rate_limit():
 
 
 def _headers() -> dict:
-    return {"Authorization": f"Bearer {CARDTRADER_API_TOKEN}"}
+    return {
+        "Authorization": f"Bearer {CARDTRADER_API_TOKEN}",
+        "User-Agent": USER_AGENT,
+        "Accept": "application/json",
+    }
 
 
 def _request_with_retry(method: str, url: str, **kwargs) -> requests.Response:

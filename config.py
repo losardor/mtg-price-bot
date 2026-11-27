@@ -73,6 +73,10 @@ def load_config() -> dict:
         "CARDTRADER_BASE_URL": "https://api.cardtrader.com/api/v2",
         "SCRYFALL_BASE_URL": "https://api.scryfall.com",
         "MTG_GAME_ID": 1,
+        # Scryfall rejects default/missing User-Agents (HTTP 400, rule
+        # generic_user_agent). Set MTG_BOT_USER_AGENT in the env file to add a
+        # contact, e.g. "mtg-price-bot/1.0 (you@example.org)".
+        "USER_AGENT": os.getenv("MTG_BOT_USER_AGENT") or "mtg-price-bot/1.0",
     }
 
 
@@ -87,3 +91,4 @@ ALERT_COOLDOWN_HOURS = _config["ALERT_COOLDOWN_HOURS"]
 CARDTRADER_BASE_URL = _config["CARDTRADER_BASE_URL"]
 SCRYFALL_BASE_URL = _config["SCRYFALL_BASE_URL"]
 MTG_GAME_ID = _config["MTG_GAME_ID"]
+USER_AGENT = _config["USER_AGENT"]

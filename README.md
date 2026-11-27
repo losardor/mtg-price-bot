@@ -73,7 +73,7 @@ Runs on **makerfaire-nuc** (Sony CSL Rome LAN, user `makerfaire`) as a systemd u
 |---|---|
 | Code | `~/bots/mtg-price-bot` (git clone; nothing is edited on the NUC) |
 | Venv | `~/bots/mtg-price-bot/.venv` (Python 3.12, `uv`) |
-| Config | `~/.config/tgbots/mtg-price-bot.env`, mode 600: `TELEGRAM_BOT_TOKEN`, `CARDTRADER_API_TOKEN`, `TELEGRAM_CHAT_ID`, `CHECK_INTERVAL_HOURS`, `ALERT_COOLDOWN_HOURS` |
+| Config | `~/.config/tgbots/mtg-price-bot.env`, mode 600: `TELEGRAM_BOT_TOKEN`, `CARDTRADER_API_TOKEN`, `TELEGRAM_CHAT_ID`, `CHECK_INTERVAL_HOURS`, `ALERT_COOLDOWN_HOURS`, optional `MTG_BOT_USER_AGENT` (Scryfall requires a real User-Agent) |
 | Watchlist | `~/.local/share/tgbots/mtg-price-bot/data/watchlist.json` (the service's working directory) |
 | Service | `deploy/mtg-price-bot.service` → `systemctl --user {status,restart} mtg-price-bot` |
 | Logs | `journalctl --user -u mtg-price-bot` (tokens redacted by [tgkit](https://github.com/losardor/tgkit)) |

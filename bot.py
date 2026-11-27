@@ -3,7 +3,7 @@ import os
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, filters
 
 import cardtrader
 import scryfall
@@ -12,10 +12,15 @@ from alerts import format_alert, format_price_report, format_watchlist, should_a
 from config import CHECK_INTERVAL_HOURS, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 from price_checker import check_all_prices, check_card_price
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-)
+try:
+    # tgkit: token redaction in every record, httpx (which logs token URLs) at WARNING
+    from tgkit import setup_logging
+    setup_logging("mtg-price-bot")
+except ImportError:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    )
 logger = logging.getLogger(__name__)
 
 
@@ -301,6 +306,25 @@ async def scheduled_price_check(app) -> None:
 # Main
 # ---------------------------------------------------------------------------
 
+COMMANDS = {
+    "help": cmd_help,
+    "start": cmd_help,
+    "add": cmd_add,
+    "remove": cmd_remove,
+    "list": cmd_list,
+    "check": cmd_check,
+}
+
+# New messages only. PTB's CommandHandler also matches edited messages by
+# default; for those update.message is None, and an edited /add was re-run.
+NEW_MESSAGES = filters.UpdateType.MESSAGE
+
+
+def register_handlers(app) -> None:
+    for name, handler in COMMANDS.items():
+        app.add_handler(CommandHandler(name, handler, filters=NEW_MESSAGES))
+
+
 def main() -> None:
     # Ensure data directory exists
     os.makedirs("data", exist_ok=True)
@@ -319,13 +343,7 @@ def main() -> None:
     # Build Telegram application
     app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
-    # Register command handlers
-    app.add_handler(CommandHandler("help", cmd_help))
-    app.add_handler(CommandHandler("start", cmd_help))
-    app.add_handler(CommandHandler("add", cmd_add))
-    app.add_handler(CommandHandler("remove", cmd_remove))
-    app.add_handler(CommandHandler("list", cmd_list))
-    app.add_handler(CommandHandler("check", cmd_check))
+    register_handlers(app)
 
     # Start APScheduler inside the event loop via post_init
     async def start_scheduler(application):

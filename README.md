@@ -64,3 +64,21 @@ python bot.py
 ## Data
 
 Watchlist data is persisted to `data/watchlist.json`. When using Docker, this directory is mounted as a volume so data survives container restarts.
+
+## Production: makerfaire-nuc
+
+Runs on **makerfaire-nuc** (Sony CSL Rome LAN, user `makerfaire`) as a systemd user service, in its own venv on uv-managed Python 3.12, without Docker.
+
+| | |
+|---|---|
+| Code | `~/bots/mtg-price-bot` (git clone; nothing is edited on the NUC) |
+| Venv | `~/bots/mtg-price-bot/.venv` (Python 3.12, `uv`) |
+| Config | `~/.config/tgbots/mtg-price-bot.env`, mode 600: `TELEGRAM_BOT_TOKEN`, `CARDTRADER_API_TOKEN`, `TELEGRAM_CHAT_ID`, `CHECK_INTERVAL_HOURS`, `ALERT_COOLDOWN_HOURS`, optional `MTG_BOT_USER_AGENT` (Scryfall requires a real User-Agent) |
+| Watchlist | `~/.local/share/tgbots/mtg-price-bot/data/watchlist.json` (the service's working directory) |
+| Service | `deploy/mtg-price-bot.service` → `systemctl --user {status,restart} mtg-price-bot` |
+| Logs | `journalctl --user -u mtg-price-bot` (tokens redacted by [tgkit](https://github.com/losardor/tgkit)) |
+| Alerts | a crash reaches Ruggiero through the monitor bot (`tgsignal-wrap -p mtg`) |
+
+Without `~/.config/tgbots/mtg-price-bot.env`, for example on the Mac, `config.py` reads the repo `.env` as before. The tests use placeholder values and never read a real `.env` or env file. Run them with Docker (`docker compose run --rm test`) or in a Python 3.12 venv (`.venv/bin/pytest -q`).
+
+Deploy after pushing: `ssh makerfaire@192.168.0.227 '~/bots/mtg-price-bot/deploy/deploy-nuc.sh'`.

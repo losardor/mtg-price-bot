@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 import requests
 
-from config import CARDTRADER_API_TOKEN, CARDTRADER_BASE_URL, MTG_GAME_ID
+from config import CARDTRADER_API_TOKEN, CARDTRADER_BASE_URL, MTG_GAME_ID, USER_AGENT
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,11 @@ def _rate_limit():
 
 
 def _headers() -> dict:
-    return {"Authorization": f"Bearer {CARDTRADER_API_TOKEN}"}
+    return {
+        "Authorization": f"Bearer {CARDTRADER_API_TOKEN}",
+        "User-Agent": USER_AGENT,
+        "Accept": "application/json",
+    }
 
 
 def _request_with_retry(method: str, url: str, **kwargs) -> requests.Response:
@@ -84,6 +88,21 @@ def get_blueprints(expansion_id: int) -> list[dict]:
     return resp.json()
 
 
+def _products_from_payload(payload) -> list[dict]:
+    """Products from a /marketplace/products response.
+
+    The live API answers {"<blueprint_id>": [product, ...]}. Extending a list
+    with that dict added only its keys (strings), which price_checker then
+    skipped, so every check found no offers. A plain list is accepted too.
+    """
+    if isinstance(payload, dict):
+        return [p for group in payload.values() if isinstance(group, list)
+                for p in group if isinstance(p, dict)]
+    if isinstance(payload, list):
+        return [p for p in payload if isinstance(p, dict)]
+    return []
+
+
 def get_marketplace_products(blueprint_id: int) -> list[dict]:
     """Fetch marketplace products for a blueprint (EN + IT), merged."""
     products = []
@@ -94,7 +113,7 @@ def get_marketplace_products(blueprint_id: int) -> list[dict]:
             "blueprint_id": blueprint_id,
             "language": lang,
         })
-        products.extend(resp.json())
+        products.extend(_products_from_payload(resp.json()))
 
     return products
 

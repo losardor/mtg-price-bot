@@ -15,3 +15,5 @@ To run a specific test file:
 ```bash
 docker compose run --rm test tests/test_scheduler.py -v
 ```
+
+The tests are hermetic (placeholder env in `tests/conftest.py`), so a Python 3.12 venv works too: on makerfaire-nuc, `~/bots/mtg-price-bot/.venv/bin/pytest -q`.

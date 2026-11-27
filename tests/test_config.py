@@ -14,6 +14,7 @@ REQUIRED_ENVS = {
 def no_dotenv(monkeypatch):
     """Prevent load_dotenv from reading .env files during tests."""
     monkeypatch.setattr(config_module, "load_dotenv", lambda: None)
+    monkeypatch.setattr(config_module, "_load_tgkit_env", lambda: False)
 
 
 @pytest.fixture

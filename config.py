@@ -1,5 +1,29 @@
 import os
+from pathlib import Path
+
 from dotenv import load_dotenv
+
+BOT_NAME = "mtg-price-bot"
+
+
+def _tgkit_env_file() -> Path | None:
+    """The host's env file (~/.config/tgbots/mtg-price-bot.env), if this host has one."""
+    try:
+        from tgkit.config import env_path
+    except ImportError:
+        return None
+    path = env_path(BOT_NAME)
+    return path if path.is_file() else None
+
+
+def _load_tgkit_env() -> bool:
+    """Load the host env file through tgkit (refuses a group/world-readable file)."""
+    path = _tgkit_env_file()
+    if path is None:
+        return False
+    from tgkit import load_env
+    load_env(BOT_NAME, env_file=path)
+    return True
 
 
 def load_config() -> dict:
@@ -8,7 +32,10 @@ def load_config() -> dict:
     Returns a dict with all config values.
     Raises KeyError for missing required vars, ValueError for invalid TELEGRAM_CHAT_ID.
     """
-    load_dotenv()
+    # On a host with ~/.config/tgbots/mtg-price-bot.env (the NUC) that file is
+    # used; otherwise the repo's .env, as in local development.
+    if not _load_tgkit_env():
+        load_dotenv()
 
     # Required
     try:
@@ -46,6 +73,10 @@ def load_config() -> dict:
         "CARDTRADER_BASE_URL": "https://api.cardtrader.com/api/v2",
         "SCRYFALL_BASE_URL": "https://api.scryfall.com",
         "MTG_GAME_ID": 1,
+        # Scryfall rejects default/missing User-Agents (HTTP 400, rule
+        # generic_user_agent). Set MTG_BOT_USER_AGENT in the env file to add a
+        # contact, e.g. "mtg-price-bot/1.0 (you@example.org)".
+        "USER_AGENT": os.getenv("MTG_BOT_USER_AGENT") or "mtg-price-bot/1.0",
     }
 
 
@@ -60,3 +91,4 @@ ALERT_COOLDOWN_HOURS = _config["ALERT_COOLDOWN_HOURS"]
 CARDTRADER_BASE_URL = _config["CARDTRADER_BASE_URL"]
 SCRYFALL_BASE_URL = _config["SCRYFALL_BASE_URL"]
 MTG_GAME_ID = _config["MTG_GAME_ID"]
+USER_AGENT = _config["USER_AGENT"]
